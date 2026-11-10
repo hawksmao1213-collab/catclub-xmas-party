@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="고양이클럽 2026 聖誕 Party 活動預告">
+<meta property="og:title" content="고양이클럽 聖誕 Party">
+<meta property="og:description" content="12 月 12 日，公會聖誕夜。三個活動，規則尚未公告。">
+<meta property="og:image" content="https://hawksmao1213-collab.github.io/catclub-xmas-party/hero.jpg">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>고양이클럽 聖誕 Party</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: 主視覺滿版 → 靠左的開場資訊 → 遊戲公告式的活動列表（點一列展開一句線索）。單一雪夜外觀，整頁飄雪。 */
+:root {
+  --night: #091338;     /* 底色，接主視覺的天空 */
+  --panel: #0f1c4d;     /* 展開後的公告欄 */
+  --snow: #eef2fb;      /* 主要文字 */
+  --mist: #9eabd2;      /* 次要文字 */
+  --gold: #f2c264;      /* 唯一強調色 */
+  --unannounced: #e0545c; /* 只用在「未公告」狀態 */
+  --rule: rgba(158, 171, 210, .2);
+  --radius: 6px;
+  --font-display: "Huninn", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --font-num: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--night);
+  color: var(--snow);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+#snow { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+
+.hero { position: relative; max-width: 1400px; margin: 0 auto; }
+.hero img { display: block; width: 100%; height: auto; max-width: 100%; }
+.hero::after {
+  content: ""; position: absolute; inset: auto 0 0 0; height: 30%;
+  background: linear-gradient(to bottom, rgba(9, 19, 56, 0), var(--night));
+  pointer-events: none;
+}
+
+main {
+  position: relative; z-index: 6;
+  max-width: 720px; margin: 0 auto;
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+  padding-block: 4px 64px;
+  display: grid; gap: 28px;
+}
+
+.when { display: grid; gap: 4px; }
+.when h1 {
+  margin: 0; font-family: var(--font-display); font-weight: 400;
+  font-size: clamp(30px, 7vw, 44px); line-height: 1.15; color: var(--gold);
+}
+.when p { margin: 0; color: var(--mist); }
+.count { font-family: var(--font-num); font-variant-numeric: tabular-nums; color: var(--snow); font-size: 15px; }
+.count b { font-weight: 500; color: var(--gold); }
+
+.open {
+  appearance: none; border: 0; cursor: pointer;
+  justify-self: start; min-height: 52px; padding: 0 28px;
+  border-radius: var(--radius);
+  background: var(--gold); color: #1d1404;
+  font-family: var(--font-display); font-size: 20px; letter-spacing: .06em;
+  display: inline-flex; align-items: center; gap: 14px;
+  transition: transform .12s ease, background-color .2s ease;
+}
+.open:hover { background: #f7d184; }
+.open:active { transform: translateY(1px); }
+.open:focus-visible { outline: 2px solid var(--snow); outline-offset: 4px; }
+.open svg { width: 14px; height: 14px; transition: transform .25s ease; }
+.open[aria-expanded="true"] svg { transform: rotate(180deg); }
+
+.board {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding-block: 20px 8px;
+}
+.board h2 {
+  margin: 0; padding-inline: 20px;
+  font-family: var(--font-display); font-weight: 400; font-size: 24px;
+}
+.board > p { margin: 2px 0 10px; padding-inline: 20px; color: var(--mist); font-size: 15px; }
+
+details { border-top: 1px solid var(--rule); }
+summary {
+  list-style: none; cursor: pointer;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 16px;
+  padding: 16px 20px;
+}
+summary::-webkit-details-marker { display: none; }
+summary:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; border-radius: var(--radius); }
+summary:hover .name { color: var(--gold); }
+.name { font-family: var(--font-display); font-size: 22px; line-height: 1.3; transition: color .15s ease; }
+.line { grid-column: 1; color: var(--mist); font-size: 15px; }
+.status {
+  grid-column: 2; grid-row: 1 / span 2;
+  font-size: 13px; letter-spacing: .08em; color: var(--unannounced);
+  border: 1px solid currentColor; border-radius: var(--radius); padding: 1px 8px;
+  white-space: nowrap;
+}
+.clue { margin: 0; padding: 0 20px 18px; color: var(--snow); }
+.clue::before { content: "線索　"; color: var(--gold); }
+
+@media (min-width: 768px) {
+  main { gap: 32px; padding-block: 0 88px; }
+  .board { padding-block: 26px 10px; }
+  .board h2, .board > p, summary, .clue { padding-inline: 28px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .open, .open svg, .name { transition: none; }
+}
+</style>
+
+<canvas id="snow" aria-hidden="true"></canvas>
+
+<header class="hero">
+  <img src="hero.jpg" alt="고양이클럽 2026 聖誕 Party 主視覺，公會成員的角色在雪夜村莊裡" width="1672" height="940" fetchpriority="high">
+</header>
+
+<main>
+  <section class="when" aria-label="開場時間">
+    <h1>12 月 12 日 星期六</h1>
+    <p>宜蘭，公會聖誕夜</p>
+    <p class="count" id="count">還有 <b id="cd">--</b> 天</p>
+  </section>
+
+  <button class="open" id="open" type="button" aria-expanded="false" aria-controls="board">
+    活動內容
+    <svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+  </button>
+
+  <section class="board" id="board" hidden>
+    <h2>活動內容</h2>
+    <p>規則還沒公告，當晚現場說明。點一下可以看一句線索。</p>
+
+    <details>
+      <summary><span class="name">神武衝裝大使</span><span class="status">未公告</span><span class="line">七張卷軸，一顆骰子。</span></summary>
+      <p class="clue">成功率當晚才公布。</p>
+    </details>
+    <details>
+      <summary><span class="name">毒藥水輪盤</span><span class="status">未公告</span><span class="line">十杯紅色藥水，有幾杯下了毒。</span></summary>
+      <p class="clue">喝到毒的人，要裝作沒事。</p>
+    </details>
+    <details>
+      <summary><span class="name">讀秒刷王大師</span><span class="status">未公告</span><span class="line">王會在幾秒後重生？不能看時鐘。</span></summary>
+      <p class="clue">手機和手錶會先收走。</p>
+    </details>
+  </section>
+</main>
+
+<audio id="bgm" src="bgm.mp3" loop preload="auto" autoplay></audio>
+
+<script>
+(function () {
+  // 先試著自動播放；瀏覽器擋下時，等使用者第一次點擊或按鍵再開始
+  var bgm = document.getElementById('bgm');
+  bgm.volume = 0.6;
+  var events = ['pointerdown', 'click', 'touchend', 'keydown'];
+  function start() {
+    var p = bgm.play();
+    if (p && p.then) p.then(stop, function () {}); else stop();
+  }
+  function stop() { events.forEach(function (e) { removeEventListener(e, start, true); }); }
+  events.forEach(function (e) { addEventListener(e, start, true); });
+  start();
+})();
+(function () {
+  // 以台灣時間的日期算還有幾天
+  var party = Date.UTC(2026, 11, 12);
+  function tick() {
+    var tw = new Date(Date.now() + 8 * 3600 * 1000);
+    var today = Date.UTC(tw.getUTCFullYear(), tw.getUTCMonth(), tw.getUTCDate());
+    var days = Math.round((party - today) / 86400000);
+    var el = document.getElementById('count');
+    if (days > 0) document.getElementById('cd').textContent = days;
+    else el.textContent = days === 0 ? '就是今天' : '派對結束了，明年見';
+  }
+  tick(); setInterval(tick, 60000);
+
+  var open = document.getElementById('open'), board = document.getElementById('board');
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  open.addEventListener('click', function () {
+    var on = open.getAttribute('aria-expanded') !== 'true';
+    open.setAttribute('aria-expanded', String(on));
+    board.hidden = !on;
+    if (on) board.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  });
+
+  // 飄雪：大小不一的雪片，近的大而快、遠的小而慢
+  var cv = document.getElementById('snow'), cx = cv.getContext('2d');
+  var W, H, flakes = [];
+  function size() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = W * dpr; cv.height = H * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var want = Math.round(Math.min(150, W * H / 9500) * (reduce ? 0.3 : 1));
+    while (flakes.length < want) flakes.push(make(true));
+    flakes.length = want;
+  }
+  function make(anyY) {
+    var z = Math.random();
+    return { x: Math.random() * W, y: anyY ? Math.random() * H : -6, r: 0.8 + z * 2.4, vy: 0.3 + z * 1.0, ph: Math.random() * 6.28, sp: 0.006 + Math.random() * 0.015, a: 0.35 + z * 0.55 };
+  }
+  var last = performance.now();
+  function frame(now) {
+    var dt = Math.min(48, now - last) / 16.7; last = now;
+    cx.clearRect(0, 0, W, H); cx.fillStyle = '#f4f7ff';
+    for (var i = 0; i < flakes.length; i++) {
+      var f = flakes[i];
+      f.ph += f.sp * dt; f.y += f.vy * dt * (reduce ? 0.4 : 1); f.x += Math.sin(f.ph) * 0.35 * dt;
+      if (f.y > H + 6) { flakes[i] = make(false); continue; }
+      if (f.x > W + 6) f.x = -6; else if (f.x < -6) f.x = W + 6;
+      cx.globalAlpha = f.a; cx.beginPath(); cx.arc(f.x, f.y, f.r, 0, 6.2832); cx.fill();
+    }
+    requestAnimationFrame(frame);
+  }
+  size(); addEventListener('resize', size); requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>
