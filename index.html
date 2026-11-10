@@ -68,8 +68,13 @@ main {
   font-size: clamp(30px, 7vw, 44px); line-height: 1.15; color: var(--gold);
 }
 .when p { margin: 0; color: var(--mist); }
-.count { font-family: var(--font-num); font-variant-numeric: tabular-nums; color: var(--snow); font-size: 15px; }
-.count b { font-weight: 500; color: var(--gold); }
+.count { display: grid; gap: 2px; margin-top: 14px; }
+.count-label { color: var(--mist); font-size: 15px; }
+.count-num {
+  font-family: var(--font-num); font-variant-numeric: tabular-nums; font-weight: 500;
+  font-size: clamp(30px, 9vw, 46px); line-height: 1.15; letter-spacing: -.01em;
+  color: var(--snow); white-space: nowrap;
+}
 
 .open {
   appearance: none; border: 0; cursor: pointer;
@@ -138,7 +143,10 @@ summary:hover .name { color: var(--gold); }
   <section class="when" aria-label="開場時間">
     <h1>12 月 12 日 星期六</h1>
     <p>宜蘭，公會聖誕夜</p>
-    <p class="count" id="count">還有 <b id="cd">--</b> 天</p>
+    <div class="count" id="count">
+      <span class="count-label" id="countLabel">距離派對還有</span>
+      <span class="count-num" id="cd" aria-live="off">-- 天 --:--:--</span>
+    </div>
   </section>
 
   <button class="open" id="open" type="button" aria-expanded="false" aria-controls="board">
@@ -182,17 +190,19 @@ summary:hover .name { color: var(--gold); }
   start();
 })();
 (function () {
-  // 以台灣時間的日期算還有幾天
-  var party = Date.UTC(2026, 11, 12);
+  // 倒數到 12/12 00:00（台灣時間），當天顯示「就是今天」
+  var party = new Date('2026-12-12T00:00:00+08:00').getTime();
+  var partyEnd = party + 86400000;
+  var cd = document.getElementById('cd'), label = document.getElementById('countLabel');
+  function pad(n) { return String(n).padStart(2, '0'); }
   function tick() {
-    var tw = new Date(Date.now() + 8 * 3600 * 1000);
-    var today = Date.UTC(tw.getUTCFullYear(), tw.getUTCMonth(), tw.getUTCDate());
-    var days = Math.round((party - today) / 86400000);
-    var el = document.getElementById('count');
-    if (days > 0) document.getElementById('cd').textContent = days;
-    else el.textContent = days === 0 ? '就是今天' : '派對結束了，明年見';
+    var now = Date.now();
+    if (now >= partyEnd) { label.textContent = ''; cd.textContent = '明年見'; return; }
+    if (now >= party) { label.textContent = ''; cd.textContent = '就是今天'; return; }
+    var t = Math.floor((party - now) / 1000);
+    cd.textContent = Math.floor(t / 86400) + ' 天 ' + pad(Math.floor(t % 86400 / 3600)) + ':' + pad(Math.floor(t % 3600 / 60)) + ':' + pad(t % 60);
   }
-  tick(); setInterval(tick, 60000);
+  tick(); setInterval(tick, 1000);
 
   var open = document.getElementById('open'), board = document.getElementById('board');
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
