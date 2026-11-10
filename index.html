@@ -68,13 +68,39 @@ main {
   font-size: clamp(30px, 7vw, 44px); line-height: 1.15; color: var(--gold);
 }
 .when p { margin: 0; color: var(--mist); }
-.count { display: grid; gap: 2px; margin-top: 14px; }
+.count { display: grid; gap: 8px; margin-top: 14px; }
 .count-label { color: var(--mist); font-size: 15px; }
-.count-num {
-  font-family: var(--font-num); font-variant-numeric: tabular-nums; font-weight: 500;
-  font-size: clamp(30px, 9vw, 46px); line-height: 1.15; letter-spacing: -.01em;
-  color: var(--snow); white-space: nowrap;
+.count-done { font-family: var(--font-display); font-size: clamp(30px, 9vw, 44px); color: var(--snow); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* 翻牌鐘：每一位數是一片翻板，上下兩半各自裁切，換數字時上半往下翻、下半接著落下 */
+.flipclock {
+  --fw: clamp(30px, 8.6vw, 50px);
+  --fh: calc(var(--fw) * 1.42);
+  --tile: #14235c;
+  --tile-low: #101d4f;
+  display: flex; align-items: flex-start; gap: clamp(8px, 3vw, 18px);
+  font-family: var(--font-num); font-weight: 500; font-variant-numeric: tabular-nums;
+  font-size: calc(var(--fw) * 1.05);
 }
+.unit { display: grid; justify-items: center; gap: 6px; }
+.unit-digits { display: flex; gap: 3px; }
+.unit-label { font-family: var(--font-body); font-size: 13px; color: var(--mist); letter-spacing: .1em; }
+.flap { position: relative; width: var(--fw); height: var(--fh); perspective: calc(var(--fh) * 4); color: var(--snow); }
+.half { position: absolute; left: 0; right: 0; height: 50%; overflow: hidden; backface-visibility: hidden; }
+.half > span { display: block; height: var(--fh); line-height: var(--fh); text-align: center; }
+.half.up { top: 0; background: var(--tile); border-radius: var(--radius) var(--radius) 0 0; transform-origin: 50% 100%; }
+.half.low { bottom: 0; background: var(--tile-low); border-radius: 0 0 var(--radius) var(--radius); transform-origin: 50% 0; }
+.half.low > span { margin-top: calc(var(--fh) / -2); }
+.flap::after {
+  content: ""; position: absolute; left: 0; right: 0; top: calc(50% - 1px); height: 2px;
+  background: var(--night); z-index: 3;
+}
+.leaf { z-index: 2; }
+.leaf.up { animation: flip-top .28s ease-in forwards; }
+.leaf.low { transform: rotateX(90deg); animation: flip-bottom .28s ease-out .28s forwards; }
+@keyframes flip-top { to { transform: rotateX(-90deg); } }
+@keyframes flip-bottom { to { transform: rotateX(0deg); } }
 
 .open {
   appearance: none; border: 0; cursor: pointer;
@@ -145,7 +171,8 @@ summary:hover .name { color: var(--gold); }
     <p>宜蘭，公會聖誕夜</p>
     <div class="count" id="count">
       <span class="count-label" id="countLabel">距離派對還有</span>
-      <span class="count-num" id="cd" aria-live="off">-- 天 --:--:--</span>
+      <div class="flipclock" id="flip" aria-hidden="true"></div>
+      <span class="sr-only" id="cd" role="timer" aria-live="off">-- 天 --:--:--</span>
     </div>
   </section>
 
@@ -193,16 +220,52 @@ summary:hover .name { color: var(--gold); }
   // 倒數到 12/12 00:00（台灣時間），當天顯示「就是今天」
   var party = new Date('2026-12-12T00:00:00+08:00').getTime();
   var partyEnd = party + 86400000;
-  var cd = document.getElementById('cd'), label = document.getElementById('countLabel');
+  var cd = document.getElementById('cd'), label = document.getElementById('countLabel'), flip = document.getElementById('flip');
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   function pad(n) { return String(n).padStart(2, '0'); }
+
+  // 建立翻牌：天、時、分、秒各兩位
+  var digits = [];
+  [['天'], ['時'], ['分'], ['秒']].forEach(function (u) {
+    var unit = document.createElement('div'); unit.className = 'unit';
+    var row = document.createElement('div'); row.className = 'unit-digits';
+    for (var i = 0; i < 2; i++) {
+      var f = document.createElement('span'); f.className = 'flap';
+      f.innerHTML = '<span class="half up"><span>0</span></span><span class="half low"><span>0</span></span>';
+      row.appendChild(f); digits.push({ el: f, v: null });
+    }
+    var lab = document.createElement('span'); lab.className = 'unit-label'; lab.textContent = u[0];
+    unit.appendChild(row); unit.appendChild(lab); flip.appendChild(unit);
+  });
+
+  function setDigit(d, v) {
+    if (d.v === v) return;
+    var up = d.el.querySelector('.half.up:not(.leaf) > span'), low = d.el.querySelector('.half.low:not(.leaf) > span');
+    if (d.v === null || still) { up.textContent = v; low.textContent = v; d.v = v; return; }
+    var old = d.v; d.v = v;
+    d.el.querySelectorAll('.leaf').forEach(function (n) { n.remove(); });
+    up.textContent = v; low.textContent = old;
+    var lu = document.createElement('span'); lu.className = 'half up leaf'; lu.innerHTML = '<span>' + old + '</span>';
+    var ll = document.createElement('span'); ll.className = 'half low leaf'; ll.innerHTML = '<span>' + v + '</span>';
+    d.el.appendChild(lu); d.el.appendChild(ll);
+    setTimeout(function () { if (d.v === v) low.textContent = v; lu.remove(); ll.remove(); }, 600);
+  }
+
   function tick() {
     var now = Date.now();
-    if (now >= partyEnd) { label.textContent = ''; cd.textContent = '明年見'; return; }
-    if (now >= party) { label.textContent = ''; cd.textContent = '就是今天'; return; }
+    if (now >= party) {
+      label.textContent = '';
+      flip.outerHTML = '<span class="count-done">' + (now >= partyEnd ? '明年見' : '就是今天') + '</span>';
+      cd.textContent = now >= partyEnd ? '明年見' : '就是今天';
+      clearInterval(timer); return;
+    }
     var t = Math.floor((party - now) / 1000);
-    cd.textContent = Math.floor(t / 86400) + ' 天 ' + pad(Math.floor(t % 86400 / 3600)) + ':' + pad(Math.floor(t % 3600 / 60)) + ':' + pad(t % 60);
+    var parts = [pad(Math.min(99, Math.floor(t / 86400))), pad(Math.floor(t % 86400 / 3600)), pad(Math.floor(t % 3600 / 60)), pad(t % 60)];
+    var s = parts.join('');
+    for (var i = 0; i < 8; i++) setDigit(digits[i], s[i]);
+    cd.textContent = parts[0] + ' 天 ' + parts[1] + ':' + parts[2] + ':' + parts[3];
   }
-  tick(); setInterval(tick, 1000);
+  var timer = setInterval(tick, 1000); tick();
 
   var open = document.getElementById('open'), board = document.getElementById('board');
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
